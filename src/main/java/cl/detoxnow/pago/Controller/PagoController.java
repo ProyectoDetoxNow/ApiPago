@@ -9,6 +9,7 @@ import cl.detoxnow.pago.Model.Pago;
 import cl.detoxnow.pago.Model.Pedido;
 import cl.detoxnow.pago.Service.PagoService;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/Api/v1/pago")
 public class PagoController {
