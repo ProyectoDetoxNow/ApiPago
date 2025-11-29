@@ -19,8 +19,8 @@ public class Pedido {
     @Column(name = "id_usuario", nullable = false)
     private int idUsuario;
 
-    @Column(columnDefinition = "jsonb", nullable = false)
-    private String productos; // snapshot del carrito en JSON
+    @Column(columnDefinition = "TEXT")
+    private String productos;
 
     @Column(nullable = false)
     private double total;
