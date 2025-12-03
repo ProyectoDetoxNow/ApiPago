@@ -2,6 +2,7 @@ package cl.detoxnow.pago.Service;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import cl.detoxnow.pago.Model.Pedido;
 import cl.detoxnow.pago.Repository.PagoRepository;
 import cl.detoxnow.pago.Repository.PedidoRepository;
 
+
 @Service
 public class PagoService {
 
@@ -32,29 +34,37 @@ public class PagoService {
     @Autowired
     private RestTemplate rest;
 
+    @Value("${api.carrito.url}")
+    private String carritoUrl;
+
+    @Value("${api.usuarios.url}")
+    private String usuarioUrl;
+
+    @Value("${api.inventario.url}")
+    private String inventarioUrl;
+   
+
     private final ObjectMapper mapper = new ObjectMapper();
 
-    // ================================================
-    // 1️⃣ CREAR PEDIDO DESDE CARRITO (TOTAL AUTOMÁTICO)
-    // ================================================
-    public Pedido crearPedido(int idUsuario) {
+    // ================================================================
+    // 1️⃣ CREAR PEDIDO (RECIBE idCarrito Y idUsuario)
+    // ================================================================
+    public Pedido crearPedido(int idCarrito, int idUsuario) {
 
-        // 1. Validar que el usuario exista
+        // 1. Validar usuario existente
         UsuarioDTO usuario;
         try {
             usuario = rest.getForObject(
-                "http://localhost:8082/api/v1/usuarios/" + idUsuario,
-                UsuarioDTO.class
-            );
+                    usuarioUrl + "/" + idUsuario,
+                    UsuarioDTO.class);
         } catch (RestClientException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
         }
 
-        // 2. Obtener carrito
+        // 2. Obtener carrito por idCarrito (NO POR USUARIO)
         CarritoDTO carrito = rest.getForObject(
-                "http://localhost:8084/Api/v1/Carrito/" + idUsuario,
-                CarritoDTO.class
-        );
+                carritoUrl + "/" + idCarrito,
+                CarritoDTO.class);
 
         if (carrito == null || carrito.getDetalles() == null || carrito.getDetalles().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El carrito está vacío");
@@ -63,10 +73,10 @@ public class PagoService {
         // 3. Calcular total real
         double total = 0;
         for (DetalleCarritoDTO det : carrito.getDetalles()) {
+
             ProductoDTO producto = rest.getForObject(
-                    "http://localhost:8083/Api/v1/inventario/" + det.getIdProducto(),
-                    ProductoDTO.class
-            );
+                    inventarioUrl + "/" + det.getIdProducto(),
+                    ProductoDTO.class);
 
             if (producto == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -76,18 +86,19 @@ public class PagoService {
             total += producto.getPrecio() * det.getCantidad();
         }
 
-        // 4. Crear snapshot del carrito (JSON)
+        // 4. Crear snapshot de carrito
         String productosJson;
         try {
             productosJson = mapper.writeValueAsString(carrito.getDetalles());
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Error al serializar carrito a JSON");
+                    "Error al generar snapshot del carrito");
         }
 
         // 5. Crear pedido
         Pedido pedido = new Pedido();
         pedido.setIdUsuario(idUsuario);
+        pedido.setIdCarrito(idCarrito);   // 🔥 AHORA SE GUARDA EL CARRITO
         pedido.setProductos(productosJson);
         pedido.setTotal(total);
         pedido.setEstado("PENDIENTE");
@@ -95,58 +106,53 @@ public class PagoService {
         return pedidoRepository.save(pedido);
     }
 
-    // ================================================
+    // ================================================================
     // 2️⃣ PAGAR PEDIDO
-    // ================================================
+    // ================================================================
     public Pago pagarPedido(Long idPedido, String metodoPago) {
 
-        // 1. Buscar pedido
+        // 1. Obtener pedido
         Pedido pedido = pedidoRepository.findById(idPedido)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Pedido no encontrado"
-                ));
+                        HttpStatus.NOT_FOUND, "Pedido no encontrado"));
 
-        // 2. Obtener carrito del usuario de ese pedido
+        // 2. Obtener carrito por idCarrito guardado en pedido
         CarritoDTO carrito = rest.getForObject(
-                "http://localhost:8084/Api/v1/Carrito/" + pedido.getIdUsuario(),
-                CarritoDTO.class
-        );
+                carritoUrl + "/" + pedido.getIdCarrito(),
+                CarritoDTO.class);
 
-        if (carrito == null || carrito.getDetalles() == null || carrito.getDetalles().isEmpty()) {
+        if (carrito == null || carrito.getDetalles().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "El carrito está vacío o no existe");
         }
 
-        // 3. Validar stock antes de descontar
-        for (var det : carrito.getDetalles()) {
+        // 3. Validar stock
+        for (DetalleCarritoDTO det : carrito.getDetalles()) {
 
             ProductoDTO producto = rest.getForObject(
-                    "http://localhost:8083/Api/v1/inventario/" + det.getIdProducto(),
-                    ProductoDTO.class
-            );
+                    inventarioUrl + "/" + det.getIdProducto(),
+                    ProductoDTO.class);
 
             if (producto.getCantidad() < det.getCantidad()) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Stock insuficiente para " + producto.getNombreProducto()
-                );
+                        "Stock insuficiente para " + producto.getNombreProducto());
             }
         }
 
         // 4. Descontar stock
-        for (var det : carrito.getDetalles()) {
+        for (DetalleCarritoDTO det : carrito.getDetalles()) {
             rest.put(
-                "http://localhost:8083/Api/v1/inventario/descontar/"
-                + det.getIdProducto() + "/" + det.getCantidad(),
-                null
+                    inventarioUrl + "/descontar/"
+                            + det.getIdProducto() + "/" + det.getCantidad(),
+                    null
             );
         }
 
         // 5. Cerrar carrito
         rest.put(
-                "http://localhost:8084/Api/v1/Carrito/cerrar/" + carrito.getId(),
-                null
-        );
+                carritoUrl + "/cerrar/" + carrito.getId(),
+                null);
 
         // 6. Actualizar pedido
         pedido.setEstado("PAGADO");
@@ -161,10 +167,9 @@ public class PagoService {
         return pagoRepository.save(pago);
     }
 
-    // ================================================
-    // GETTERS
-    // ================================================
-
+    // ================================================================
+    // MÉTODOS GETTER
+    // ================================================================
     public Pedido getPedidoById(Long idPedido) {
         return pedidoRepository.findById(idPedido)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,

@@ -9,7 +9,7 @@ import cl.detoxnow.pago.Model.Pago;
 import cl.detoxnow.pago.Model.Pedido;
 import cl.detoxnow.pago.Service.PagoService;
 
-@CrossOrigin(origins = "*")
+
 @RestController
 @RequestMapping("/Api/v1/pago")
 public class PagoController {
@@ -17,36 +17,40 @@ public class PagoController {
     @Autowired
     private PagoService service;
 
+    // LISTAR PEDIDOS
     @GetMapping("/pedido")
     public List<Pedido> verPedidos() {
         return service.getAllPedidos();
     }
 
+    // LISTAR PAGOS
     @GetMapping("/pago")
     public List<Pago> verPagos() {
-    return service.getAllPagos();
+        return service.getAllPagos();
     }
 
+    // OBTENER PEDIDO POR ID
     @GetMapping("/pedido/{idPedido}")
     public Pedido obtenerPedido(@PathVariable("idPedido") Long idPedido) {
         return service.getPedidoById(idPedido);
     }
 
-// Obtener pago por ID
-@GetMapping("/pago/{idPago}")
-public Pago obtenerPago(@PathVariable("idPago") Long idPago) {
-    return service.getPagoById(idPago);
-}
-
-    //  Crear pedido desde carrito
-    @PostMapping("/pedido/crear/{idUsuario}")
-    public Pedido crearPedido(
-        @PathVariable("idUsuario") int idUsuario) {
-
-    return service.crearPedido(idUsuario);
+    // OBTENER PAGO POR ID
+    @GetMapping("/pago/{idPago}")
+    public Pago obtenerPago(@PathVariable("idPago") Long idPago) {
+        return service.getPagoById(idPago);
     }
 
-    // Pagar pedido
+    // CREAR PEDIDO DESDE CARRITO (RECIBE idCarrito y idUsuario)
+    @PostMapping("/pedido/crear/{idCarrito}/{idUsuario}")
+    public Pedido crearPedido(
+            @PathVariable("idCarrito") int idCarrito,
+            @PathVariable("idUsuario") int idUsuario) {
+
+        return service.crearPedido(idCarrito, idUsuario);
+    }
+
+    // PAGAR UN PEDIDO
     @PostMapping("/pedido/pagar/{idPedido}")
     public Pago pagarPedido(
             @PathVariable("idPedido") Long idPedido,

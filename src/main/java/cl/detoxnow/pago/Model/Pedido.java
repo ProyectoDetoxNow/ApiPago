@@ -19,6 +19,9 @@ public class Pedido {
     @Column(name = "id_usuario", nullable = false)
     private int idUsuario;
 
+    @Column(name = "id_carrito", nullable = false)
+    private int idCarrito;   // ← AGREGADO
+
     @Column(columnDefinition = "TEXT")
     private String productos;
 
