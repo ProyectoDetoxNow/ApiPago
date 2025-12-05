@@ -1,4 +1,4 @@
-package cl.detoxnow.pago.Config;
+package cl.detoxnow.pago.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMethod;
 import cl.detoxnow.pago.Model.Pago;
 import cl.detoxnow.pago.Model.Pedido;
 import cl.detoxnow.pago.Service.PagoService;
@@ -12,6 +14,23 @@ import cl.detoxnow.pago.Service.PagoService;
 
 @RestController
 @RequestMapping("/Api/v1/pago")
+@CrossOrigin(
+    origins = {
+        "http://localhost:3000",
+        "https://ecomerceev2-scarletjara-projects.vercel.app",
+        "https://ecomerceev2-git-main-scarletjara-projects.vercel.app",
+        "https://ecomerceev2-git-draft-pensive-moore-scarletjara-projects.vercel.app",
+        "https://ecomerceev2-git-preview-scarletjara-projects.vercel.app"
+    },
+    allowedHeaders = "*",
+    methods = {
+        RequestMethod.GET,
+        RequestMethod.POST,
+        RequestMethod.PUT,
+        RequestMethod.DELETE,
+        RequestMethod.OPTIONS
+    }
+)
 public class PagoController {
 
     @Autowired
