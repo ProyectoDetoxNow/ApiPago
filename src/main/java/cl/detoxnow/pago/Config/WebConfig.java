@@ -20,7 +20,8 @@ public class WebConfig {
                                 "https://ecomerceev2-scarletjara-projects.vercel.app",
                                 "https://ecomerceev2-git-main-scarletjara-projects.vercel.app",
                                 "https://ecomerceev2-git-draft-scarletjara-projects.vercel.app",
-                                "https://ecomerceev2-git-preview-scarletjara-projects.vercel.app"
+                                "https://ecomerceev2-git-preview-scarletjara-projects.vercel.app",
+                                "https://detoxnow.vercel.app"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
