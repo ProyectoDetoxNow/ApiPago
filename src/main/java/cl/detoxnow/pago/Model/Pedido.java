@@ -1,4 +1,4 @@
-package cl.detoxnow.pago.Model;
+package cl.detoxnow.pago.model;
 
 import jakarta.persistence.*;
 import lombok.*;

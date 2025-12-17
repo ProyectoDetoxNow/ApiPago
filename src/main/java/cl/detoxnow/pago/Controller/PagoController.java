@@ -1,13 +1,17 @@
-package cl.detoxnow.pago.Controller;
+package cl.detoxnow.pago.controller;
 
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import cl.detoxnow.pago.Model.Pago;
-import cl.detoxnow.pago.Model.Pedido;
-import cl.detoxnow.pago.Service.PagoService;
+import cl.detoxnow.pago.service.PagoService;
+import cl.detoxnow.pago.model.Pago;
+import cl.detoxnow.pago.model.Pedido;
+import cl.detoxnow.pago.service.EnvioService;
+import cl.detoxnow.pago.DTO.EnvioDTO;
+import cl.detoxnow.pago.DTO.EnvioResponseDTO;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +41,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 )
 @Tag(name = "Pago", description = "Endpoints para gestión de pagos y pedidos")
 public class PagoController {
+
+    private final EnvioService envioService;
+    
 
     @Autowired
     private PagoService service;
@@ -123,4 +130,15 @@ public class PagoController {
 
         return service.pagarPedido(idPedido, metodoPago);
     }
+
+    // CALCULAR COSTO DE ENVÍO
+     public PagoController(EnvioService envioService) {
+        this.envioService = envioService;
+    }
+
+    @PostMapping("/calcular-envio")
+    public EnvioResponseDTO calcularEnvio(@RequestBody EnvioDTO envio) {
+        return envioService.calcularEnvio(envio);
+    }
+    
 }

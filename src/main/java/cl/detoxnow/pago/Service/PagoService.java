@@ -1,4 +1,4 @@
-package cl.detoxnow.pago.Service;
+package cl.detoxnow.pago.service;
 
 import java.util.List;
 
@@ -16,10 +16,10 @@ import cl.detoxnow.pago.DTO.CarritoDTO;
 import cl.detoxnow.pago.DTO.DetalleCarritoDTO;
 import cl.detoxnow.pago.DTO.ProductoDTO;
 import cl.detoxnow.pago.DTO.UsuarioDTO;
-import cl.detoxnow.pago.Model.Pago;
-import cl.detoxnow.pago.Model.Pedido;
 import cl.detoxnow.pago.Repository.PagoRepository;
 import cl.detoxnow.pago.Repository.PedidoRepository;
+import cl.detoxnow.pago.model.Pago;
+import cl.detoxnow.pago.model.Pedido;
 
 
 @Service
